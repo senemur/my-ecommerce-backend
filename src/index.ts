@@ -9,13 +9,13 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors({
-  origin: "http://localhost:3000", // Next.js frontend adresi
+  origin: "http://localhost:3000",
   credentials: true,
 }));
 app.use(express.json());
 
 // --- PRODUCTS ---
-app.get("/api/products", async (req, res) => {
+app.get("/api/products", async (_req, res) => {
   const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
   res.json(products);
 });
@@ -28,9 +28,8 @@ app.get("/api/products/:id", async (req, res) => {
 });
 
 // --- CART ---
-// get cart by userId (simple demo)
 app.get("/api/cart", async (req, res) => {
-  const userId = Number(req.query.userId);
+  const userId = req.query.userId as string;   // 🔑 artık string
   if (!userId) return res.status(400).json({ error: "userId required" });
   const items = await prisma.cartItem.findMany({
     where: { userId },
@@ -39,16 +38,21 @@ app.get("/api/cart", async (req, res) => {
   res.json(items);
 });
 
-// add/update cart item
 app.post("/api/cart", async (req, res) => {
-  const { userId, productId, quantity } = req.body;
-  if (!userId || !productId) return res.status(400).json({ error: "userId & productId required" });
+  const { userId, productId, quantity } = req.body as {
+    userId: string;
+    productId: number;
+    quantity?: number;
+  };
+  if (!userId || !productId) {
+    return res.status(400).json({ error: "userId & productId required" });
+  }
 
   const existing = await prisma.cartItem.findFirst({ where: { userId, productId } });
   if (existing) {
     const updated = await prisma.cartItem.update({
       where: { id: existing.id },
-      data: { quantity: (existing.quantity || 0) + (quantity || 1) },
+      data: { quantity: existing.quantity + (quantity || 1) },
     });
     return res.json(updated);
   }
@@ -67,36 +71,47 @@ app.delete("/api/cart/:id", async (req, res) => {
 
 // --- FAVORITES ---
 app.get("/api/favorites", async (req, res) => {
-  const userId = Number(req.query.userId);
+  const userId = req.query.userId as string;
   if (!userId) return res.status(400).json({ error: "userId required" });
-  const favs = await prisma.favorite.findMany({ where: { userId }, include: { product: true }});
+  const favs = await prisma.favorite.findMany({
+    where: { userId },
+    include: { product: true },
+  });
   res.json(favs);
 });
 
 app.post("/api/favorites", async (req, res) => {
-  const { userId, productId } = req.body;
+  const { userId, productId } = req.body as { userId: string; productId: number };
   if (!userId || !productId) return res.status(400).json({ error: "userId & productId required" });
 
-  const exists = await prisma.favorite.findFirst({ where: { userId, productId }});
+  const exists = await prisma.favorite.findFirst({ where: { userId, productId } });
   if (exists) return res.json(exists);
 
-  const created = await prisma.favorite.create({ data: { userId, productId }});
+  const created = await prisma.favorite.create({ data: { userId, productId } });
   res.json(created);
 });
 
 // --- ORDERS ---
 app.get("/api/orders", async (req, res) => {
-  const userId = Number(req.query.userId);
+  const userId = req.query.userId as string;
   if (!userId) return res.status(400).json({ error: "userId required" });
-  const orders = await prisma.order.findMany({ where: { userId }, include: { items: { include: { product: true } } }});
+  const orders = await prisma.order.findMany({
+    where: { userId },
+    include: { items: { include: { product: true } } },
+  });
   res.json(orders);
 });
 
 app.post("/api/orders", async (req, res) => {
-  const { userId, items } = req.body; // items: [{ productId, quantity, price }]
-  if (!userId || !items || !Array.isArray(items)) return res.status(400).json({ error: "userId & items required" });
+  const { userId, items } = req.body as {
+    userId: string;
+    items: { productId: number; quantity: number; price: number }[];
+  };
+  if (!userId || !items || !Array.isArray(items)) {
+    return res.status(400).json({ error: "userId & items required" });
+  }
 
-  const total = items.reduce((s: number, it: any) => s + Number(it.price) * Number(it.quantity), 0);
+  const total = items.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0);
 
   const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.create({ data: { userId, total } });
@@ -110,7 +125,6 @@ app.post("/api/orders", async (req, res) => {
         },
       });
     }
-    // optionally clear cart for user
     await tx.cartItem.deleteMany({ where: { userId } });
     return order;
   });
@@ -121,6 +135,7 @@ app.post("/api/orders", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
 });
+
 app.get("/", (_req, res) => {
   res.send("Backend API çalışıyor 🚀");
 });

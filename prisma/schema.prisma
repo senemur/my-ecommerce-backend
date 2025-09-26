@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  /// Firebase UID doğrudan burada tutulur.
+  id        String    @id
+  email     String    @unique
   name      String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   orders    Order[]
   cartItems CartItem[]
   favorites Favorite[]
@@ -30,20 +31,20 @@ model Product {
 }
 
 model CartItem {
-  id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id])
-  userId    Int
-  product   Product @relation(fields: [productId], references: [id])
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   // <— Int yerine String
+  product   Product  @relation(fields: [productId], references: [id])
   productId Int
-  quantity  Int     @default(1)
+  quantity  Int      @default(1)
   addedAt   DateTime @default(now())
 }
 
 model Favorite {
-  id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id])
-  userId    Int
-  product   Product @relation(fields: [productId], references: [id])
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   // <— Int yerine String
+  product   Product  @relation(fields: [productId], references: [id])
   productId Int
   addedAt   DateTime @default(now())
 }
@@ -51,7 +52,7 @@ model Favorite {
 model Order {
   id        Int         @id @default(autoincrement())
   user      User        @relation(fields: [userId], references: [id])
-  userId    Int
+  userId    String      // <— Int yerine String
   total     Decimal     @db.Decimal(10,2)
   createdAt DateTime    @default(now())
   items     OrderItem[]

@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "public"."User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -23,7 +23,7 @@ CREATE TABLE "public"."Product" (
 -- CreateTable
 CREATE TABLE "public"."CartItem" (
     "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
     "productId" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 1,
     "addedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -34,7 +34,7 @@ CREATE TABLE "public"."CartItem" (
 -- CreateTable
 CREATE TABLE "public"."Favorite" (
     "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
     "productId" INTEGER NOT NULL,
     "addedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -44,7 +44,7 @@ CREATE TABLE "public"."Favorite" (
 -- CreateTable
 CREATE TABLE "public"."Order" (
     "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
     "total" DECIMAL(10,2) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
