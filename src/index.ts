@@ -29,8 +29,9 @@ app.get("/api/products/:id", async (req, res) => {
 
 // --- CART ---
 app.get("/api/cart", async (req, res) => {
-  const userId = req.query.userId as string;   // 🔑 artık string
+  const userId = req.query.userId as string;
   if (!userId) return res.status(400).json({ error: "userId required" });
+
   const items = await prisma.cartItem.findMany({
     where: { userId },
     include: { product: true },
@@ -39,35 +40,54 @@ app.get("/api/cart", async (req, res) => {
 });
 
 app.post("/api/cart", async (req, res) => {
-  const { userId, productId, quantity } = req.body as {
-    userId: string;
-    productId: number;
-    quantity?: number;
-  };
-  if (!userId || !productId) {
-    return res.status(400).json({ error: "userId & productId required" });
-  }
+  try {
+    const { userId, productId, quantity } = req.body as {
+      userId: string;
+      productId: number;
+      quantity?: number;
+    };
 
-  const existing = await prisma.cartItem.findFirst({ where: { userId, productId } });
-  if (existing) {
-    const updated = await prisma.cartItem.update({
-      where: { id: existing.id },
-      data: { quantity: existing.quantity + (quantity || 1) },
+    if (!userId || !productId) {
+      return res.status(400).json({ error: "userId & productId required" });
+    }
+
+    // ✅ Kullanıcıyı bul/oluştur: UID yoksa Prisma FK hatası verir
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {}, // varsa dokunma
+      create: {
+        id: userId,
+        email: `${userId}@placeholder.com`, // email unique olduğu için basit bir placeholder
+      },
     });
-    return res.json(updated);
+
+    // ✅ Sepette aynı ürün varsa miktarı arttır
+    const existing = await prisma.cartItem.findFirst({
+      where: { userId, productId },
+    });
+
+    if (existing) {
+      const updated = await prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: existing.quantity + (quantity || 1) },
+        include: { product: true },
+      });
+      return res.json(updated);
+    }
+
+    // ✅ Yeni cart item oluştur
+    const created = await prisma.cartItem.create({
+      data: { userId, productId, quantity: quantity || 1 },
+      include: { product: true },
+    });
+
+    res.json(created);
+  } catch (err) {
+    console.error("POST /api/cart error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-
-  const created = await prisma.cartItem.create({
-    data: { userId, productId, quantity: quantity || 1 },
-  });
-  res.json(created);
 });
 
-app.delete("/api/cart/:id", async (req, res) => {
-  const id = Number(req.params.id);
-  await prisma.cartItem.delete({ where: { id } });
-  res.json({ ok: true });
-});
 
 // --- FAVORITES ---
 app.get("/api/favorites", async (req, res) => {

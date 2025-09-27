@@ -9,6 +9,10 @@ async function main() {
       { name: "Yüksek Bel Jean", description: "Kot pantolon", price: "499.00", image: "/tshirt.jpg" },
       { name: "Sneaker Ayakkabı", description: "Konforlu", price: "799.00", image: "/tshirt.jpg" },
       { name: "Deri Omuz Çantası", description: "Şık çanta", price: "699.00", image: "/tshirt.jpg" },
+      { name: "Mini Etek", description: "Şık etek", price: "359.00", image: "/tshirt.jpg" },
+      { name: "Topuklu Ayakkabı", description: "Şık ayakkabı", price: "675.00", image: "/tshirt.jpg" },
+      { name: "Sırt Çantası", description: "Rahat", price: "899.00", image: "/tshirt.jpg" },
+      { name: "Çiçekli Elbise", description: "Şık elbise", price: "500.00", image: "/tshirt.jpg" }
     ]
   });
   console.log('✅ Seed verileri başarıyla eklendi');
