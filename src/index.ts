@@ -88,6 +88,57 @@ app.post("/api/cart", async (req, res) => {
   }
 });
 
+// Tek bir cartItem'ı sil
+app.delete("/api/cart/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ error: "Geçersiz id" });
+  }
+
+  try {
+    const deleted = await prisma.cartItem.delete({
+      where: { id },
+    });
+    return res.json(deleted);
+  } catch (err) {
+    console.error("DELETE /api/cart/:id error:", err);
+    return res.status(500).json({ error: "Silme işlemi sırasında hata oluştu" });
+  }
+});
+
+// Sepetteki ürün miktarını azalt veya artır
+app.patch("/api/cart/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { delta } = req.body as { delta: number }; // örn: -1 veya +1
+  if (!id || Number.isNaN(id) || !delta) {
+    return res.status(400).json({ error: "Geçersiz istek" });
+  }
+
+  try {
+    const item = await prisma.cartItem.findUnique({ where: { id } });
+    if (!item) return res.status(404).json({ error: "Bulunamadı" });
+
+    // Yeni miktar
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+      // miktar 0 veya altına düşerse tamamen sil
+      await prisma.cartItem.delete({ where: { id } });
+      return res.json({ ok: true, deleted: true });
+    }
+
+    const updated = await prisma.cartItem.update({
+      where: { id },
+      data: { quantity: newQty },
+      include: { product: true },
+    });
+    return res.json(updated);
+  } catch (err) {
+    console.error("PATCH /api/cart/:id error:", err);
+    return res.status(500).json({ error: "Sunucu hatası" });
+  }
+});
+
+
 
 // --- FAVORITES ---
 app.get("/api/favorites", async (req, res) => {
