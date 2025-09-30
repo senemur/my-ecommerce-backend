@@ -51,7 +51,7 @@ app.post("/api/cart", async (req, res) => {
       return res.status(400).json({ error: "userId & productId required" });
     }
 
-    // ✅ Kullanıcıyı bul/oluştur: UID yoksa Prisma FK hatası verir
+    // Kullanıcıyı bul/oluştur: UID yoksa Prisma FK hatası verir
     await prisma.user.upsert({
       where: { id: userId },
       update: {}, // varsa dokunma
@@ -61,7 +61,7 @@ app.post("/api/cart", async (req, res) => {
       },
     });
 
-    // ✅ Sepette aynı ürün varsa miktarı arttır
+    // Sepette aynı ürün varsa miktarı arttır
     const existing = await prisma.cartItem.findFirst({
       where: { userId, productId },
     });
@@ -75,7 +75,7 @@ app.post("/api/cart", async (req, res) => {
       return res.json(updated);
     }
 
-    // ✅ Yeni cart item oluştur
+    // Yeni cart item oluştur
     const created = await prisma.cartItem.create({
       data: { userId, productId, quantity: quantity || 1 },
       include: { product: true },
@@ -158,7 +158,8 @@ app.post("/api/favorites", async (req, res) => {
   const exists = await prisma.favorite.findFirst({ where: { userId, productId } });
   if (exists) return res.json(exists);
 
-  const created = await prisma.favorite.create({ data: { userId, productId } });
+  const created = await prisma.favorite.create({ data: { userId, productId },
+   include: { product: true },  });
   res.json(created);
 });
 
