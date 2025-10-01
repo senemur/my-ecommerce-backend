@@ -12,6 +12,7 @@ async function main() {
     { name: "Topuklu Ayakkabı", description: "Şık ayakkabı", price: "675.00", image: "/topukluayakkabi.jpg" },
     { name: "Sırt Çantası", description: "Rahat", price: "899.00", image: "/sirtcantasi.jpg" },
     { name: "Çiçekli Elbise", description: "Şık elbise", price: "500.00", image: "/ciceklielbise.jpg" },
+    { name: "Elbise", description: "elbise", price: "400.00", image: "/ciceklielbise.jpg" },
   ];
 
   for (const p of products) {

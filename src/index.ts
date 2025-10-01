@@ -27,6 +27,29 @@ app.get("/api/products/:id", async (req, res) => {
   res.json(product);
 });
 
+// Ürün ekle
+app.post("/api/products", async (req, res) => {
+  const { name, price, image, description } = req.body;
+  try {
+    const newProduct = await prisma.product.create({
+      data: {
+        name,
+        price: Number(price),
+        image,
+        description,
+        
+      },
+    });
+    res.json(newProduct);
+  } catch (err) {
+    console.error("POST /api/products error:", err);
+    res.status(500).json({ error: "Ürün eklenemedi" });
+  }
+});
+
+
+
+
 // --- CART ---
 app.get("/api/cart", async (req, res) => {
   const userId = req.query.userId as string;
@@ -53,6 +76,7 @@ app.post("/api/cart", async (req, res) => {
 
     // Kullanıcıyı bul/oluştur: UID yoksa Prisma FK hatası verir
     await prisma.user.upsert({
+
       where: { id: userId },
       update: {}, // varsa dokunma
       create: {
@@ -60,6 +84,9 @@ app.post("/api/cart", async (req, res) => {
         email: `${userId}@placeholder.com`, // email unique olduğu için basit bir placeholder
       },
     });
+
+    console.log("User ensured:", userId);
+    
 
     // Sepette aynı ürün varsa miktarı arttır
     const existing = await prisma.cartItem.findFirst({
@@ -153,6 +180,9 @@ app.get("/api/favorites", async (req, res) => {
 
 app.post("/api/favorites", async (req, res) => {
   const { userId, productId } = req.body as { userId: string; productId: number };
+
+  console.log("Backend’e gelen UID:", userId);
+
   if (!userId || !productId) return res.status(400).json({ error: "userId & productId required" });
 
   const exists = await prisma.favorite.findFirst({ where: { userId, productId } });
@@ -162,6 +192,25 @@ app.post("/api/favorites", async (req, res) => {
    include: { product: true },  });
   res.json(created);
 });
+
+// Favorilerden tek bir ürünü sil
+app.delete("/api/favorites/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  if (!id || Number.isNaN(id)) {
+    return res.status(400).json({ error: "Geçersiz id" });
+  }
+
+  try {
+    const deleted = await prisma.favorite.delete({
+      where: { id },
+    });
+    return res.json(deleted);
+  } catch (err) {
+    console.error("DELETE /api/favorites/:id error:", err);
+    return res.status(500).json({ error: "Silme işlemi sırasında hata oluştu" });
+  }
+});
+
 
 // --- ORDERS ---
 app.get("/api/orders", async (req, res) => {
